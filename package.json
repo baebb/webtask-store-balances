@@ -1,0 +1,16 @@
+{
+    "name": "webtask-store-balances",
+    "version": "0.0.1",
+    "description": "Webtask to store the balances and values of a crypto exchange wallet",
+    "main": "handler.js",
+    "keywords": [
+        "serverless",
+        "webtasks"
+    ],
+    "devDependencies": {
+        "@webtask/serverless-webtasks": "^1.0.1"
+    },
+    "dependencies": {
+        "node-fetch": "^1.7.3"
+    }
+}

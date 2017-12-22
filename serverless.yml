@@ -1,0 +1,12 @@
+service:
+  name: webtask-store-balances
+
+provider:
+  name: webtasks
+
+functions:
+  storeBalances:
+    handler: storeBalances
+
+plugins:
+  - '@webtask/serverless-webtasks'
