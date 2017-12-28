@@ -3,6 +3,4 @@ node_modules
 
 # Serverless directories
 .serverless
-
-# Keys
 secrets.yml
