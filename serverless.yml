@@ -3,6 +3,9 @@ service:
 
 provider:
   name: webtasks
+  environment:
+      AWS_ACCESS_KEY_ID: ${env:AWS_ACCESS_KEY_ID, file(secrets.yml):AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${env:AWS_SECRET_ACCESS_KEY, file(secrets.yml):AWS_SECRET_ACCESS_KEY}
 
 functions:
   storeBalances:
