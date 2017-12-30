@@ -2,32 +2,67 @@
 'use latest';
 const fetch = require('node-fetch');
 const AWS = require('aws-sdk');
-const dynamoDB = new AWS.DynamoDB.DocumentClient();
 
 const summaryUrl = 'https://wt-07d3444cd5d8561f1c4063625863e880-0.sandbox.auth0-extend.com/webtask-bitfinex-data-dev-getFinexData?summary=true';
 const taskName = 'STORE_BALANCES';
 
 module.exports = async function (ctx, cb) {
   console.log(`${taskName} NEW_STORE_BALANCES_REQUEST`);
+  const dynamoDB = new AWS.DynamoDB.DocumentClient({
+    accessKeyId: ctx.secrets.AWS_ACCESS_KEY_ID,
+    secretAccessKey: ctx.secrets.AWS_SECRET_ACCESS_KEY,
+    region: 'us-east-1'
+  });
   
-  async function getBalances () {
+  async function storeBalance(user, balance) {
+    const params = {
+      TableName: 'CWbalanceData',
+      Key: { user: user },
+      UpdateExpression: 'set #balances = list_append(if_not_exists(#balances, :empty_list), :balance)',
+      ExpressionAttributeNames: {
+        '#balances': 'balances',
+      },
+      ExpressionAttributeValues: {
+        ':balance': [balance],
+        ':empty_list': [],
+      }
+    };
+    
+    try {
+      await dynamoDB.update(params).promise();
+      console.log(`BALANCE_STORED_SUCCESS ${user}`);
+      return { dbUpdateSuccess: true };
+    } catch (err) {
+      console.log(`BALANCE_STORE_ERROR:`);
+      throw new Error(err);
+    }
+  }
+  
+  async function getBalances() {
     console.log(`${taskName} GETTING_WALLET_SUMMARY`);
     try {
       let res = await fetch(summaryUrl);
-      if(res.ok) {
+      if (res.ok) {
         let data = await res.json();
         return data;
       } else {
         throw new Error(res);
       }
-    } catch(err) {
+    } catch (err) {
       console.log(`${taskName} FETCH_ERROR:`);
-      return err;
+      throw new Error(err);
     }
   }
   
   if (ctx.query.store === 'true') {
-  
+    try {
+      const balances = await getBalances();
+      const saveBalance = await storeBalance('me@rossdyson.com', balances);
+      cb(null, saveBalance);
+    } catch (err) {
+      console.log(err);
+      cb(null, { error: true, name: err.name, message: err.message })
+    }
   } else {
     //ross just wants a live summary
     try {
@@ -35,7 +70,7 @@ module.exports = async function (ctx, cb) {
       cb(null, balances);
     } catch (err) {
       console.log(err);
-      cb(null, err)
+      cb(null, { error: true, details: err })
     }
   }
 };
