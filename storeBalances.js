@@ -2,6 +2,8 @@
 'use latest';
 const fetch = require('node-fetch');
 const AWS = require('aws-sdk');
+const _ = require('lodash');
+
 
 const summaryUrl = 'https://wt-07d3444cd5d8561f1c4063625863e880-0.sandbox.auth0-extend.com/webtask-bitfinex-data-dev-getFinexData?summary=true';
 const taskName = 'STORE_BALANCES';
@@ -38,10 +40,10 @@ module.exports = async function (ctx, cb) {
     }
   }
   
-  async function getBalances() {
+  async function getBalances(userKey, userSecret) {
     console.log(`${taskName} GETTING_WALLET_SUMMARY`);
     try {
-      let res = await fetch(summaryUrl);
+      let res = await fetch(`${summaryUrl}&userkey=${userKey}&userSecret=${userSecret}`);
       if (res.ok) {
         let data = await res.json();
         return data;
@@ -54,10 +56,13 @@ module.exports = async function (ctx, cb) {
     }
   }
   
+  const user = _.get(ctx.secrets,'USER_NAME', null);
+  const userKey = _.get(ctx.secrets,'BITFINEX_API_KEY', null);
+  const userSecret = _.get(ctx.secrets,'BITFINEX_API_SECRET', null);
   if (ctx.query.store === 'true') {
     try {
-      const balances = await getBalances();
-      const saveBalance = await storeBalance('me@rossdyson.com', balances);
+      const balances = await getBalances(userKey, userSecret);
+      const saveBalance = await storeBalance(user, balances);
       cb(null, saveBalance);
     } catch (err) {
       console.log(err);
@@ -66,11 +71,11 @@ module.exports = async function (ctx, cb) {
   } else {
     //ross just wants a live summary
     try {
-      const balances = await getBalances();
+      const balances = await getBalances(userKey, userSecret);
       cb(null, balances);
     } catch (err) {
       console.log(err);
-      cb(null, { error: true, details: err })
+      cb(null, { error: true, name: err.name, message: err.message })
     }
   }
 };

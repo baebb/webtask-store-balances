@@ -4,8 +4,11 @@ service:
 provider:
   name: webtasks
   environment:
-      AWS_ACCESS_KEY_ID: ${env:AWS_ACCESS_KEY_ID, file(secrets.yml):AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${env:AWS_SECRET_ACCESS_KEY, file(secrets.yml):AWS_SECRET_ACCESS_KEY}
+    AWS_ACCESS_KEY_ID: ${file(secrets.yml):AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${file(secrets.yml):AWS_SECRET_ACCESS_KEY}
+    USER_NAME: ${file(secrets.yml):USER_NAME}
+    BITFINEX_API_KEY: ${file(secrets.yml):BITFINEX_API_KEY}
+    BITFINEX_API_SECRET: ${file(secrets.yml):BITFINEX_API_SECRET}
 
 functions:
   storeBalances:
